@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Loading...</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=VT323&display=swap" rel="stylesheet">
+
+<style>
+
+body{
+  margin:0;
+  height:100vh;
+  background:white;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-family:'Share Tech Mono', monospace;
+  overflow:hidden;
+}
+
+/* LOADER */
+
+#loader{text-align:center;}
+.loading-text{font-size:42px;margin-bottom:18px;}
+.bar{width:260px;height:6px;background:#eee;border-radius:20px;overflow:hidden;margin:auto;}
+.progress{height:100%;width:0%;background:#ff3b3b;transition:.2s;}
+.percent{margin-top:14px;font-size:26px;}
+.error{margin-top:16px;font-size:26px;color:#ff2b2b;opacity:0;}
+
+/* CORRUPTION */
+
+#corrupt{
+  position:fixed;
+  inset:0;
+  background:black;
+  color:#00ff9c;
+  font-family:'VT323', monospace;
+  font-size:18px;
+  padding:20px;
+  opacity:0;
+  white-space:pre-wrap;
+  pointer-events:none;
+}
+
+/* FLASH */
+
+.flash{
+  animation:flash .08s;
+}
+@keyframes flash{
+  0%{background:white;}
+  100%{background:black;}
+}
+
+/* GLITCH SHAKE */
+
+.glitch{
+  animation:glitchMove .25s infinite alternate;
+}
+@keyframes glitchMove{
+  0%{transform:translate(0,0);}
+  25%{transform:translate(-5px,3px);}
+  50%{transform:translate(4px,-2px);}
+  75%{transform:translate(-3px,2px);}
+  100%{transform:translate(0,0);}
+}
+
+/* 404 */
+
+#notfound{display:none;text-align:center;padding:40px;}
+.code{font-size:120px;color:#ff2b2b;}
+.title{font-size:40px;}
+.sub{font-size:26px;margin-top:16px;color:#444;}
+.btn{margin-top:34px;padding:12px 30px;border:none;background:#111;color:white;font-size:20px;border-radius:6px;cursor:pointer;}
+/* FULL SCREEN POWER FLASH */
+
+.power-flash{
+  animation:powerFlash .12s infinite;
+}
+
+@keyframes powerFlash{
+  0%{background:black;}
+  50%{background:white;}
+  100%{background:black;}
+}
+/* CURSED VISUAL STATES */
+
+.curse-invert{
+  filter:invert(1) contrast(1.4);
+}
+
+.curse-tear{
+  animation:tear .18s infinite;
+}
+
+@keyframes tear{
+  0%{transform:translate(0,0) skew(0deg);}
+  20%{transform:translate(-12px,4px) skew(-6deg);}
+  40%{transform:translate(10px,-6px) skew(5deg);}
+  60%{transform:translate(-6px,3px) skew(-3deg);}
+  80%{transform:translate(8px,-2px) skew(4deg);}
+  100%{transform:translate(0,0) skew(0deg);}
+}
+
+/* VOID BLINK (sudden black frames) */
+
+.void{
+  animation:voidBlink .09s;
+}
+
+@keyframes voidBlink{
+  0%{opacity:1;}
+  100%{opacity:0;}
+}
+
+/* CURSED TEXT GHOST */
+
+#ghost{
+  position:fixed;
+  inset:0;
+  color:#00ff9c;
+  font-family:'VT323', monospace;
+  font-size:22px;
+  pointer-events:none;
+  opacity:0;
+  text-align:center;
+  padding-top:20vh;
+  letter-spacing:3px;
+}
+</style>
+</head>
+
+<body>
+
+<div id="loader">
+  <div class="loading-text">INITIALIZING SYSTEM...</div>
+  <div class="bar"><div class="progress" id="bar"></div></div>
+  <div class="percent" id="percent">0%</div>
+  <div class="error" id="errorText"></div>
+</div>
+
+<div id="corrupt"></div>
+
+<div id="notfound">
+  <div class="code">404</div>
+  <div class="title">SYSTEM FAILURE</div>
+  <div class="sub">DATA LOST — UNKNOWN BREACH DETECTED</div>
+  <button class="btn" onclick="parent.nextScene()">INITIATE RECOVERY</button>
+</div>
+
+<audio id="crash1" src="crash.mp3"></audio>
+<audio id="crash2" src="crash.mp3"></audio>
+<audio id="crash3" src="crash.mp3"></audio>
+<audio id="crash4" src="crash.mp3"></audio>
+<audio id="static" src="static.mp3" loop></audio>
+<audio id="whisper1" src="whisper.mp3"></audio>
+<audio id="whisper2" src="whisper.mp3"></audio>
+<audio id="whisper3" src="whisper.mp3"></audio>
+<script>
+
+let progress = 0;
+let frozen = false;
+let inputCount = 0;
+
+const bar = document.getElementById("bar");
+const percent = document.getElementById("percent");
+const corrupt = document.getElementById("corrupt");
+const crashSound = document.getElementById("crashSound");
+
+/* RANDOM CODE WRITE + DELETE */
+
+function chaoticCode(){
+
+  const chars = "01#$%&@NULLVOIDERROR<>/\\▓▒░█";
+  let code = "";
+
+  const interval = setInterval(()=>{
+
+    if(Math.random() > .5 && code.length > 0){
+      code = code.slice(0,-1); // delete
+    }else{
+      code += chars[Math.floor(Math.random()*chars.length)]; // write
+    }
+
+    if(Math.random()>.9) code += "\n";
+
+    corrupt.innerText = code;
+
+  },12);
+
+  setTimeout(()=>clearInterval(interval),2300);
+}
+
+/* RANDOM FLASHES */
+
+function randomFlashes(){
+
+  let flashes = Math.floor(Math.random()*6)+4;
+
+  for(let i=0;i<flashes;i++){
+    setTimeout(()=>{
+      document.body.classList.add("flash");
+      setTimeout(()=>document.body.classList.remove("flash"),60);
+    },Math.random()*2000);
+  }
+}
+
+/* GLITCH SEQUENCE */
+
+function startGlitch(){
+
+  stackedCrash();
+  cursedAudioLayer();
+
+  corrupt.style.opacity = 1;
+  document.body.classList.add("glitch");
+
+  chaoticCode();
+  randomFlashes();
+  screenFlash();
+
+  cursedText();        // <<< ADD
+  voidBlinks();        // <<< ADD
+  cursedDistortion();  // <<< ADD
+
+  setTimeout(()=>{
+    corrupt.style.opacity = 0;
+    document.getElementById("loader").style.display="none";
+    document.getElementById("notfound").style.display="block";
+  },2600);
+}
+
+/* INPUT LISTENER */
+
+function registerInput(){
+  if(!frozen) return;
+  inputCount++;
+  if(inputCount > 5){
+    startGlitch();
+    window.removeEventListener("keydown", registerInput);
+    window.removeEventListener("mousedown", registerInput);
+  }
+}
+
+window.addEventListener("keydown", registerInput);
+window.addEventListener("mousedown", registerInput);
+
+/* LOADER */
+
+const loader = setInterval(()=>{
+
+  if(frozen) return;
+
+  progress++;
+  bar.style.width = progress + "%";
+  percent.innerText = progress + "%";
+
+  /* RANDOM FREEZE BETWEEN 11 — 97 */
+
+  if(progress > 11 && progress < 97 && Math.random() > .975){
+    frozen = true;
+  }
+
+  if(progress >= 100){
+    clearInterval(loader);
+  }
+
+},55);
+/* FULL SCREEN FLASH LOOP */
+
+function screenFlash(){
+
+  document.body.classList.add("power-flash");
+
+  // Randomize speed slightly while flashing
+  const chaos = setInterval(()=>{
+    document.body.style.animationDuration = (0.08 + Math.random()*0.12) + "s";
+  },120);
+
+  setTimeout(()=>{
+    clearInterval(chaos);
+    document.body.classList.remove("power-flash");
+    document.body.style.animationDuration = "";
+  },2400); // same duration as glitch
+}
+/* CURSED GHOST TEXT */
+
+function cursedText(){
+
+  const ghost = document.getElementById("ghost");
+
+  const fragments = [
+    "DO NOT PROCEED",
+    "INPUT REJECTED",
+    "YOU SHOULD NOT BE HERE",
+    "SYSTEM WATCHING",
+    "ERROR ERROR ERROR",
+    "UNAUTHORIZED",
+    "WAKE UP",
+    "STOP"
+  ];
+
+  let flashes = Math.floor(Math.random()*6)+6;
+
+  for(let i=0;i<flashes;i++){
+    setTimeout(()=>{
+      ghost.innerText = fragments[Math.floor(Math.random()*fragments.length)];
+      ghost.style.opacity = Math.random() > .5 ? .9 : .4;
+
+      setTimeout(()=>ghost.style.opacity=0,80+Math.random()*120);
+    },Math.random()*2000);
+  }
+}
+
+
+/* RANDOM VOID BLINKS */
+
+function voidBlinks(){
+
+  let blinks = Math.floor(Math.random()*5)+4;
+
+  for(let i=0;i<blinks;i++){
+    setTimeout(()=>{
+      document.body.classList.add("void");
+      setTimeout(()=>document.body.classList.remove("void"),60);
+    },Math.random()*2200);
+  }
+}
+
+
+/* CURSED DISTORTION BURSTS */
+
+function cursedDistortion(){
+
+  let bursts = Math.floor(Math.random()*5)+5;
+
+  for(let i=0;i<bursts;i++){
+    setTimeout(()=>{
+
+      document.body.classList.add("curse-tear");
+
+      if(Math.random()>.5)
+        document.body.classList.add("curse-invert");
+
+      setTimeout(()=>{
+        document.body.classList.remove("curse-tear");
+        document.body.classList.remove("curse-invert");
+      },120+Math.random()*160);
+
+    },Math.random()*2300);
+  }
+}
+/* STACKED CHAOTIC CRASH SOUND */
+
+function stackedCrash(){
+
+  const sounds = [
+    document.getElementById("crash1"),
+    document.getElementById("crash2"),
+    document.getElementById("crash3"),
+    document.getElementById("crash4")
+  ];
+
+  sounds.forEach((audio, i)=>{
+
+    setTimeout(()=>{
+
+      try{
+        audio.currentTime = 0;
+
+        // Slight pitch variation (chaotic feel)
+        audio.playbackRate = 0.85 + Math.random()*0.3;
+
+        // Random volume so it doesn't sound repeated
+        audio.volume = 0.6 + Math.random()*0.4;
+
+        audio.play();
+      }catch(e){}
+
+    }, i * (120 + Math.random()*180)); // irregular stacking delay
+
+  });
+
+}
+/* RADIO STATIC + DISTORTED WHISPERS */
+
+function cursedAudioLayer(){
+
+  const staticSound = document.getElementById("static");
+  const whispers = [
+    document.getElementById("whisper1"),
+    document.getElementById("whisper2"),
+    document.getElementById("whisper3")
+  ];
+
+  /* STATIC START */
+
+  try{
+    staticSound.currentTime = 0;
+    staticSound.volume = 0.25;
+    staticSound.play();
+  }catch(e){}
+
+  /* RANDOM WHISPERS */
+
+  whispers.forEach((w, i)=>{
+
+    setTimeout(()=>{
+
+      try{
+        w.currentTime = 0;
+
+        // Distortion feel
+        w.playbackRate = 0.7 + Math.random()*0.6;
+
+        // Random low volume
+        w.volume = 0.15 + Math.random()*0.25;
+
+        w.play();
+      }catch(e){}
+
+    }, 200 + Math.random()*1200);
+
+  });
+
+  /* STOP AFTER GLITCH */
+
+  setTimeout(()=>{
+    staticSound.pause();
+    staticSound.currentTime = 0;
+  },2600);
+}
+</script>
+<div id="ghost"></div>
+</body>
+</html>

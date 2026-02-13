@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Memory Booth</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
+<style>
+body{
+  margin:0;
+  overflow:hidden;
+  background:black;
+  font-family: 'Playfair Display', serif;
+  color:white;
+}
+
+/* ================= CAMERA ================= */
+#cameraWrap{
+  position:absolute;
+  top:45%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  text-align:center;
+  transition:transform 1s ease, opacity 1s ease;
+  z-index:5; /* camera always above petals */
+}
+
+#camera{
+  width:340px;
+  cursor:pointer;
+  transition:transform .15s;
+}
+
+.flash{
+  position:fixed;
+  inset:0;
+  background:white;
+  opacity:0;
+  pointer-events:none;
+}
+
+/* ================= FINAL PHOTO ================= */
+#photoHero{
+  position:absolute;
+  top:55%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  opacity:0;
+  transition:opacity 1.2s ease, transform 1.2s ease;
+  text-align:center;
+}
+
+#photoHero img{
+  width:280px;
+  border-radius:8px;
+  transform:scale(1);
+  opacity:1;
+  box-shadow:0 0 25px rgba(255,180,210,.25);
+  transition:box-shadow .2s ease, transform .2s ease;
+}
+
+/* ================= DOWNLOAD BUTTON ================= */
+#downloadBtn{
+  position:absolute;
+  bottom:8vh;
+  left:50%;
+  transform:translateX(-50%);
+  background:#ff6fae;
+  border:none;
+  padding:12px 26px;
+  border-radius:30px;
+  color:white;
+  font-size:18px;
+  cursor:pointer;
+  box-shadow:0 0 15px rgba(255,105,180,.5);
+  opacity:0;
+  transition:.5s;
+}
+#downloadBtn.show{ opacity:1; }
+
+#finalLine{
+  margin-top:16px;
+  opacity:.85;
+}
+
+/* ================= PETALS ================= */
+.petal{
+  position:fixed;
+  pointer-events:none;
+  will-change:transform;
+  z-index:1;
+}
+/* ===== VALENTINE SCREEN ===== */
+
+#valentineScreen{
+  position:fixed;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:
+    radial-gradient(circle at 50% 60%, rgba(255,0,120,.25), transparent 55%),
+    radial-gradient(circle at 40% 40%, rgba(255,100,200,.18), transparent 60%),
+    #000;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity 1.6s ease;
+  z-index:20;
+}
+
+/* RGB LOVE TEXT */
+
+#valText{
+  font-size:52px;
+  text-align:center;
+  font-family:'Playfair Display', serif;
+  letter-spacing:.5px;
+  color:white;
+
+  text-shadow:
+    0 0 6px rgba(255,140,190,.55),
+    0 0 18px rgba(255,105,180,.28);
+
+  animation:softGlow 3.2s ease-in-out infinite;
+}
+
+@keyframes softGlow{
+  0%,100%{
+    text-shadow:
+      0 0 6px rgba(255,140,190,.45),
+      0 0 16px rgba(255,105,180,.25);
+    transform:scale(1);
+  }
+  50%{
+    text-shadow:
+      0 0 12px rgba(255,150,200,.65),
+      0 0 28px rgba(255,105,180,.35);
+    transform:scale(1.015);
+  }
+}
+
+@keyframes rgbGlow{
+  0%{
+    text-shadow:
+      -2px 0 red,
+      2px 0 cyan,
+      0 0 10px pink,
+      0 0 25px hotpink;
+    transform:scale(1);
+  }
+  100%{
+    text-shadow:
+      -4px 0 red,
+      4px 0 cyan,
+      0 0 18px pink,
+      0 0 40px hotpink;
+    transform:scale(1.04);
+  }
+}
+#valentineScreen .petal{
+  filter:drop-shadow(0 0 6px rgba(255,150,200,.6));
+  opacity:.9;
+}
+#valentineScreen{
+  position:fixed;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:
+    radial-gradient(circle at 50% 60%, rgba(255,0,120,.18), transparent 55%),
+    radial-gradient(circle at 40% 40%, rgba(255,100,200,.12), transparent 60%),
+    #000;
+
+  opacity:0;
+  pointer-events:none;
+  transition:opacity 1.6s ease;
+  z-index:10;
+}
+
+/* petals visible on top */
+.petal{
+  z-index:15;
+}
+#easter{
+  position:fixed;
+  inset:0;
+  background:black;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity 1.5s ease;
+  z-index:50;
+}
+
+#heartCanvas{
+  width:100%;
+  height:100%;
+  display:block;
+}
+</style>
+</head>
+
+<body>
+
+<div id="cameraWrap">
+  <img id="camera" src="camera1.png">
+</div>
+
+<div id="photoHero">
+  <img src="final-strip.png" id="realPhoto">
+  <div id="finalLine">Some memories aren’t captured… they’re felt. ♡</div>
+</div>
+
+<button id="downloadBtn">Download Memory</button>
+
+<div class="flash" id="flash"></div>
+
+<audio id="shutter" src="shutter.mp3"></audio>
+<audio id="music" src="perfect.mp3"></audio>
+
+<script>
+/* ================= CAMERA CLICK ================= */
+let step=1;
+const cam=document.getElementById("camera");
+const flash=document.getElementById("flash");
+const shutter=document.getElementById("shutter");
+const music=document.getElementById("music");
+
+cam.onclick=()=>{
+  if(step>4) return;
+
+  cam.style.transform="scale(.96)";
+  setTimeout(()=>cam.style.transform="scale(1)",120);
+
+  flash.style.opacity=1;
+  setTimeout(()=>flash.style.opacity=0,120);
+
+  shutter.currentTime=0;
+  shutter.play();
+
+  step++;
+  if(step<=4) cam.src=`camera${step}.png`;
+
+  if(step===5) revealFinal();
+};
+
+/* ================= FINAL REVEAL ================= */
+function revealFinal(){
+
+  const camWrap=document.getElementById("cameraWrap");
+
+  // camera moves up + fades
+  camWrap.style.transform="translate(-50%,-60%) scale(.9)";
+  camWrap.style.opacity=0;
+
+  setTimeout(()=>camWrap.style.display="none",600);
+
+  // show photo
+  document.getElementById("photoHero").style.opacity=1;
+  document.getElementById("photoHero").style.transform="translate(-50%,-50%) scale(1.02)";
+
+  document.getElementById("downloadBtn").classList.add("show");
+
+  music.currentTime = 0;
+music.play().catch(()=>{});
+startRomanticPulse();
+
+// stop exactly at 1:40 (100 seconds)
+setTimeout(()=>{
+  music.pause();
+  showValentineScreen();
+}, 100000);
+}
+function startRomanticPulse(){
+
+  const photo = document.querySelector("#photoHero img");
+
+  // gentle slow pulse (matches calm tempo of Perfect)
+  const beat = setInterval(()=>{
+
+    photo.style.boxShadow="0 0 42px rgba(255,170,200,.35)";
+    photo.style.transform="scale(1.018)";
+
+    setTimeout(()=>{
+      photo.style.boxShadow="0 0 26px rgba(255,180,210,.22)";
+      photo.style.transform="scale(1)";
+    },420);
+
+  }, 1720);   // slower, calm, romantic pulse
+
+  // stop when music ends
+  setTimeout(()=>clearInterval(beat),100000);
+}
+function showValentineScreen(){
+
+  const screen = document.getElementById("valentineScreen");
+
+  screen.style.opacity = 1;
+  screen.style.pointerEvents = "auto";
+
+  // gentle fade out old scene
+  document.getElementById("photoHero").style.opacity = 0;
+  document.getElementById("downloadBtn").style.opacity = 0;
+}
+/* ================= DOWNLOAD ================= */
+document.getElementById("downloadBtn").onclick = () => {
+
+  const img = document.getElementById("realPhoto");
+
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+
+  /* ========= SCALE DOWN BUT KEEP RATIO ========= */
+
+  const SCALE = 0.45;   // 🔧 change this number to control size
+  // 0.50 = half size
+  // 0.40 = smaller
+  // 0.35 = much smaller
+
+  const targetW = img.naturalWidth * SCALE;
+  const targetH = img.naturalHeight * SCALE;
+
+  canvas.width = targetW;
+  canvas.height = targetH;
+
+  ctx.drawImage(img, 0, 0, targetW, targetH);
+
+  const link = document.createElement("a");
+  link.download = "Our-Memory.png";
+  link.href = canvas.toDataURL("image/png");
+  link.click();
+};
+
+/* ================= PETALS ================= */
+const petals=[];
+const COUNT=45;
+const centerX=window.innerWidth/2;
+const centerY=window.innerHeight/2;
+const DEAD=220;
+
+for(let i=0;i<COUNT;i++){
+  const p=document.createElement("img");
+  p.src="petal.png";
+  p.className="petal";
+  p.style.width=(8+Math.random()*14)+"px";
+  document.body.appendChild(p);
+
+  petals.push({
+    el:p,
+    x:Math.random()*window.innerWidth,
+    y:Math.random()*window.innerHeight,
+    vx:(Math.random()-.5)*0.3,
+    vy:(Math.random()*.3)+.2,
+    rot:Math.random()*360
+  });
+}
+
+document.addEventListener("mousemove",e=>{
+  petals.forEach(p=>{
+    const dx=p.x-e.clientX;
+    const dy=p.y-e.clientY;
+    const dist=Math.sqrt(dx*dx+dy*dy);
+    if(dist<90){
+      p.vx+=dx*.0008;
+      p.vy+=dy*.0008;
+    }
+  });
+});
+
+function animate(){
+  petals.forEach(p=>{
+    const dx=p.x-centerX;
+    const dy=p.y-centerY;
+    const d=Math.sqrt(dx*dx+dy*dy);
+    if(d<DEAD){
+      p.vx+=dx*.0006;
+      p.vy+=dy*.0006;
+    }
+
+    p.x+=p.vx;
+    p.y+=p.vy;
+    p.rot+=0.2;
+
+    if(p.y>window.innerHeight+20){
+      p.y=-20;
+      p.x=Math.random()*window.innerWidth;
+    }
+
+    p.el.style.transform=`translate(${p.x}px,${p.y}px) rotate(${p.rot}deg)`;
+  });
+
+  requestAnimationFrame(animate);
+}
+animate();
+
+/* ================= SECRET KEY: v i d ================= */
+
+let secret="";
+document.addEventListener("keydown",e=>{
+  secret += e.key.toLowerCase();
+  if(secret.length>3) secret = secret.slice(-3);
+
+  if(secret==="vid"){
+    triggerEaster();
+  }
+});
+
+function triggerEaster(){
+
+  const easter = document.getElementById("easter");
+  easter.style.opacity = 1;
+  easter.style.pointerEvents = "auto";
+
+  const canvas = document.getElementById("heartCanvas");
+  const ctx = canvas.getContext("2d");
+
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const petals = [];
+  const COUNT = 220;
+
+  const cx = canvas.width / 2;
+  const cy = canvas.height / 2;
+
+  // create petals randomly
+  for(let i=0;i<COUNT;i++){
+    petals.push({
+      x:Math.random()*canvas.width,
+      y:Math.random()*canvas.height,
+      size:2+Math.random()*2,
+      t:Math.random()*Math.PI*2
+    });
+  }
+
+  // heart equation
+  function heartPos(t){
+    const scale = 14;
+    const x = scale * 16 * Math.pow(Math.sin(t),3);
+    const y = -scale * (13*Math.cos(t) - 5*Math.cos(2*t) - 2*Math.cos(3*t) - Math.cos(4*t));
+    return {x:cx + x, y:cy + y};
+  }
+
+  let progress = 0;
+  let formed = false;
+
+  // falling petals after heart
+  const falling = [];
+
+  function animate(){
+
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    if(!formed){
+      progress += 0.002;
+
+      petals.forEach((p,i)=>{
+        const target = heartPos((i/petals.length)*Math.PI*2);
+
+        p.x += (target.x - p.x) * progress;
+        p.y += (target.y - p.y) * progress;
+
+        ctx.fillStyle="rgba(255,150,200,0.9)";
+        ctx.beginPath();
+        ctx.arc(p.x,p.y,p.size,0,Math.PI*2);
+        ctx.fill();
+      });
+
+      if(progress >= 1){
+        formed = true;
+
+        // start falling petals
+        for(let i=0;i<70;i++){
+          falling.push({
+            x:Math.random()*canvas.width,
+            y:-20,
+            vy:0.3 + Math.random()*0.4,
+            size:2 + Math.random()*2,
+            drift:(Math.random()-.5)*0.3
+          });
+        }
+      }
+
+    } else {
+
+      // draw heart still
+      petals.forEach(p=>{
+        ctx.fillStyle="rgba(255,150,200,0.9)";
+        ctx.beginPath();
+        ctx.arc(p.x,p.y,p.size,0,Math.PI*2);
+        ctx.fill();
+      });
+
+      // falling petals
+      falling.forEach(f=>{
+        f.y += f.vy;
+        f.x += f.drift;
+
+        if(f.y > canvas.height + 10){
+          f.y = -10;
+          f.x = Math.random()*canvas.width;
+        }
+
+        ctx.fillStyle="rgba(255,170,210,0.85)";
+        ctx.beginPath();
+        ctx.arc(f.x,f.y,f.size,0,Math.PI*2);
+        ctx.fill();
+      });
+    }
+
+    requestAnimationFrame(animate);
+  }
+
+  animate();
+}
+</script>
+<div id="valentineScreen">
+  <div id="valText">Happy Valentine's Day<br>My Cutie Pie ♡</div>
+</div>
+<div id="easter">
+  <canvas id="heartCanvas"></canvas>
+</div>
+</body>
+</html>

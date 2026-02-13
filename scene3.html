@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Psychological Scan</title>
+<style>
+body{
+  margin:0;
+  height:100vh;
+  background:#070707;
+  color:#e6e6e6;
+  font-family:monospace;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+}
+
+.container{
+  width:480px;
+  text-align:center;
+}
+
+.title{
+  font-size:20px;
+  margin-bottom:20px;
+  letter-spacing:1px;
+}
+
+.option{
+  border:1px solid #333;
+  padding:12px;
+  margin:10px 0;
+  cursor:pointer;
+  border-radius:4px;
+  transition:.2s;
+  position:relative;
+}
+
+.option:hover{
+  border-color:#00ff9c;
+  box-shadow:0 0 14px rgba(0,255,156,.45);
+  background:linear-gradient(90deg, rgba(0,255,156,.06), transparent);
+}
+
+.tick{
+  position:absolute;
+  right:10px;
+  top:50%;
+  transform:translateY(-50%);
+  color:#00ff9c;
+  font-size:16px;
+  opacity:0;
+  transition:.3s;
+}
+
+.system{
+  margin-top:18px;
+  font-size:13px;
+  color:#00ff9c;
+  min-height:20px;
+}
+
+.correct{
+  border-color:#00ff9c;
+  box-shadow:0 0 10px rgba(0,255,156,.5);
+}
+#bootScreen{
+  position:fixed;
+  inset:0;
+  background:#050505;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:9999;
+  font-size:13px;
+  color:#00ff9c;
+  letter-spacing:1px;
+}
+
+.boot-glitch{
+  animation:glitch .15s infinite;
+}
+
+@keyframes glitch{
+  0%{transform:translate(0);}
+  25%{transform:translate(-2px,1px);}
+  50%{transform:translate(2px,-1px);}
+  75%{transform:translate(-1px,-2px);}
+  100%{transform:translate(0);}
+}
+#bootScreen{
+  transition:opacity .4s ease;
+}
+</style>
+</head>
+<body>
+
+<div id="bootScreen">
+  <div id="bootText"></div>
+</div>
+
+<div class="container">
+
+  <div class="title" id="question">Choose the correct option.</div>
+
+  <div id="progress" style="font-size:12px; opacity:.6; margin-bottom:8px;"></div>
+  <div id="emotion" style="font-size:11px; opacity:.6; margin-bottom:6px;"></div>
+
+  <div id="options"></div>
+  <div class="system" id="systemLine"></div>
+
+</div>
+
+<!-- SOUND -->
+<audio id="wrongSound" src="wrong.mp3"></audio>
+<audio id="correctSound" src="success.mp3"></audio>
+<script>
+const emotionBox = document.getElementById("emotion");
+
+const emotions = [
+  "Analyzing emotional state...",
+  "Micro-expression detected...",
+  "Emotional resistance detected...",
+  "Hidden affection spike...",
+  "Subject unstable but attached...",
+  "Emotional bond confirmed..."
+];
+const progress = document.getElementById("progress");
+
+const bootLines = [
+  "Initializing interface...",
+  "Loading emotional engine...",
+  "Injecting memory fragments...",
+  "Syncing with subject: Nnavya",
+  "Building psychological scan...",
+  "Stabilizing interface...",
+  "Ready."
+];
+
+const bootText = document.getElementById("bootText");
+const bootScreen = document.getElementById("bootScreen");
+
+let bootIndex = 0;
+
+function bootSequence(){
+  if(bootIndex >= bootLines.length){
+    setTimeout(()=>{
+      bootScreen.style.opacity="0";
+      setTimeout(()=>{
+        bootScreen.remove();
+        loadQuestion();
+      },400);
+    },400);
+    return;
+  }
+
+  bootText.innerText = bootLines[bootIndex];
+  bootScreen.classList.add("boot-glitch");
+
+  setTimeout(()=>{
+    bootScreen.classList.remove("boot-glitch");
+    bootIndex++;
+    setTimeout(bootSequence,250);
+  },220);
+}
+
+bootSequence();
+const QUESTIONS = [
+
+{
+  q: "Who is hotter?",
+  options: ["Aditya","Damon Salvatore"],
+  correct: 0,
+  sys: "System detects your real emotions."
+},
+
+{
+  q: "Who overthinks more?",
+  options: ["Aditya","Nnavya"],
+  correct: 1,
+  sys: "System detected 47 tabs open in tiny brain."
+},
+
+{
+  q: "Who is more stubborn?",
+  options: ["Aditya","Nnavya"],
+  correct: 1,
+  sys: "System detected… extreme stubbornness confirmed."
+}
+
+];
+
+let index = 0;
+
+const question = document.getElementById("question");
+const optionsBox = document.getElementById("options");
+const systemLine = document.getElementById("systemLine");
+
+const wrongSound = document.getElementById("wrongSound");
+const correctSound = new Audio("success.mp3");
+/* TYPEWRITER */
+function decodeText(text){
+  const chars = "█▓▒░<>/\\|{}[]";
+  let revealed = "";
+  let i = 0;
+
+  const t = setInterval(()=>{
+
+    let glitchPart = "";
+    for(let j=i;j<text.length;j++){
+      glitchPart += chars[Math.floor(Math.random()*chars.length)];
+    }
+
+    systemLine.innerText = revealed + glitchPart;
+
+    i++;
+
+    if(i>text.length){
+      clearInterval(t);
+      systemLine.innerText = text;
+    }
+
+    revealed = text.slice(0,i);
+
+  },18);
+}
+
+/* LOAD QUESTION */
+function loadQuestion(){
+  progress.innerText = `Scan Progress: ${Math.floor((index/QUESTIONS.length)*100)}%`;
+  emotionBox.innerText = emotions[Math.floor(Math.random()*emotions.length)];
+
+  if(index >= QUESTIONS.length){
+    setTimeout(()=>{
+      decodeText("Emotional verification complete. Final step required for full recovery.");
+    },400);
+
+    setTimeout(()=>{
+  if(parent && parent.nextScene){
+  parent.nextScene();
+}
+},3200);
+
+    return;
+  }
+
+  const Q = QUESTIONS[index];
+  question.innerText = Q.q;
+  optionsBox.innerHTML="";
+  systemLine.innerText="";
+
+  Q.options.forEach((opt,i)=>{
+
+    const div=document.createElement("div");
+    div.className="option";
+    div.innerText=opt;
+
+    const tick=document.createElement("span");
+    tick.className="tick";
+    tick.innerText="✔";
+    div.appendChild(tick);
+
+div.onclick = () => {
+
+  // prevent spam click
+  div.onclick = null;
+
+  const isCorrect = (i === Q.correct);
+
+  // stop any playing sound first
+  wrongSound.pause();
+  correctSound.pause();
+  wrongSound.currentTime = 0;
+  correctSound.currentTime = 0;
+
+  // play correct OR wrong immediately
+  if(isCorrect){
+    correctSound.play().catch(()=>{});
+  }else{
+    wrongSound.play().catch(()=>{});
+  }
+
+  tick.style.opacity = 1;
+
+  setTimeout(() => {
+
+    tick.style.opacity = 0;
+
+    const correctBox = optionsBox.children[Q.correct];
+    const correctTick = correctBox.querySelector(".tick");
+
+    correctBox.classList.add("correct");
+    correctTick.style.opacity = 1;
+
+    setTimeout(()=>{
+      decodeText(Q.sys);
+    },300);
+
+    setTimeout(()=>{
+      index++;
+      loadQuestion();
+    },1800);
+
+  },450);
+};
+
+    optionsBox.appendChild(div);
+  });
+}
+
+
+window.addEventListener("error", () => {
+  if(index === 0) loadQuestion();
+});
+</script>
+</body>
+</html>

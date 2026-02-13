@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Identity Verification</title>
+
+<style>
+body{
+  margin:0;
+  height:100vh;
+  background:#0a0a0a;
+  color:#e6e6e6;
+  font-family:monospace;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+}
+
+.container{
+  text-align:center;
+  width:420px;
+}
+
+.title{
+  font-size:24px;
+  margin-bottom:10px;
+  letter-spacing:1px;
+}
+
+.subtitle{
+  font-size:14px;
+  color:#aaa;
+  margin-bottom:24px;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(6,1fr);
+  gap:8px;
+  margin-bottom:18px;
+}
+
+.box{
+  width:56px;
+  height:56px;
+  border:1px solid #333;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:26px;
+  text-transform:uppercase;
+  transition:.2s;
+}
+
+.correct{ background:#2ecc71; color:black; border:none; }
+.present{ background:#f1c40f; color:black; border:none; }
+.wrong{ background:#2a2a2a; border:none; }
+
+input{
+  background:#111;
+  border:1px solid #333;
+  color:white;
+  padding:10px;
+  font-size:16px;
+  width:100%;
+  outline:none;
+  text-align:center;
+  letter-spacing:3px;
+}
+
+.hint{
+  margin-top:8px;
+  font-size:13px;
+  color:#777;
+}
+
+.system{
+  margin-top:22px;
+  font-size:14px;
+  color:#00ff9c;
+  min-height:22px;
+  letter-spacing:.5px;
+}
+
+.glow{
+  box-shadow:0 0 12px #2ecc71;
+}
+/* PRE-BUILD GLITCH SCREEN */
+
+#boot{
+  position:fixed;
+  inset:0;
+  background:black;
+  color:#00ff9c;
+  font-family:monospace;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:9999;
+  overflow:hidden;
+}
+
+.boot-text{
+  font-size:18px;
+  opacity:.8;
+  letter-spacing:2px;
+}
+
+/* Glitch distortion */
+
+.boot-glitch{
+  animation:bootGlitch .18s infinite alternate;
+}
+
+@keyframes bootGlitch{
+  0%{transform:translate(0,0) skew(0deg);}
+  25%{transform:translate(-6px,3px) skew(-3deg);}
+  50%{transform:translate(5px,-2px) skew(2deg);}
+  75%{transform:translate(-4px,2px) skew(-2deg);}
+  100%{transform:translate(0,0) skew(0deg);}
+}
+
+/* STRONGER WHITE FLASH */
+
+.boot-flash{
+  animation:bootFlash .08s;
+}
+
+@keyframes bootFlash{
+  0%{background:black;}
+  40%{background:white;}
+  100%{background:black;}
+}
+</style>
+</head>
+<body>
+<div id="boot">
+  <div class="boot-text" id="bootText">INITIALIZING IDENTITY MODULE...</div>
+</div>
+
+<div class="container">
+
+  <div class="title">Identity Verification Required</div>
+  <div class="subtitle">Enter the secret word to continue recovery.</div>
+
+  <div class="grid" id="grid"></div>
+
+  <input id="input" maxlength="6" placeholder="Enter word..." autofocus>
+
+  <div class="hint">Only one person in this world answers to this — u.</div>
+
+  <div class="system" id="systemText"></div>
+
+</div>
+
+<!-- SOUNDS -->
+<audio id="wrongSound" src="wrong.mp3"></audio>
+<audio id="successSound" src="success.mp3"></audio>
+
+<script>
+
+const WORD = "POTATO";
+let attempts = 0;
+const MAX = 6;
+
+const grid = document.getElementById("grid");
+const input = document.getElementById("input");
+const systemText = document.getElementById("systemText");
+
+const wrongSound = document.getElementById("wrongSound");
+const successSound = document.getElementById("successSound");
+
+/* CREATE GRID */
+for(let i=0;i<36;i++){
+  const box=document.createElement("div");
+  box.className="box";
+  grid.appendChild(box);
+}
+
+/* TYPEWRITER */
+function typeSystem(text){
+  systemText.innerText="";
+  let i=0;
+  const typing=setInterval(()=>{
+    systemText.innerText+=text[i];
+    i++;
+    if(i>=text.length) clearInterval(typing);
+  },25);
+}
+
+/* WORD CHECK */
+input.addEventListener("keydown",e=>{
+  if(e.key==="Enter"){
+    const guess=input.value.toUpperCase();
+    if(guess.length!==6) return;
+
+    const rowStart=attempts*6;
+
+    for(let i=0;i<6;i++){
+      const box=grid.children[rowStart+i];
+      box.innerText=guess[i];
+
+      if(guess[i]===WORD[i]){
+        box.classList.add("correct");
+      }
+      else if(WORD.includes(guess[i])){
+        box.classList.add("present");
+      }
+      else{
+        box.classList.add("wrong");
+      }
+    }
+
+    attempts++;
+    input.value="";
+
+    /* SUCCESS */
+   if(guess === WORD){
+
+  successSound.currentTime=0;
+  successSound.play().catch(()=>{});
+
+  input.disabled=true;
+
+  for(let b of grid.children){
+    if(b.classList.contains("correct")) b.classList.add("glow");
+  }
+
+  setTimeout(()=>{
+    typeSystem("Identity confirmed. Emotional match: 100%. Proceeding to psychological scan…");
+  },400);
+
+  setTimeout(()=>{
+    console.log("SCENE2 SUCCESS TRIGGERED");
+    parent.nextScene();
+  },3500);
+}
+
+    /* WRONG */
+    else{
+      wrongSound.currentTime=0;
+      wrongSound.play().catch(()=>{});
+    }
+
+    /* RESET AFTER FAIL */
+    if(attempts>=MAX && guess!==WORD){
+      setTimeout(()=>{
+        typeSystem("Verification failed. Try again.");
+      },200);
+
+      attempts=0;
+      setTimeout(()=>{
+        grid.innerHTML="";
+        for(let i=0;i<36;i++){
+          const box=document.createElement("div");
+          box.className="box";
+          grid.appendChild(box);
+        }
+      },1200);
+    }
+  }
+});
+/* ===== PRE-LOAD GLITCH BUILD ===== */
+
+const boot = document.getElementById("boot");
+const bootText = document.getElementById("bootText");
+
+function bootSequence(){
+
+  const fragments = [
+    "SCANNING MEMORY...",
+    "LOADING NEURAL PROFILE...",
+    "RECONSTRUCTING INTERFACE...",
+    "AUTH LAYER INITIALIZING...",
+    "STABILIZING SIGNAL...",
+    "COMPILING REALITY..."
+  ];
+
+  let steps = 0;
+
+  const interval = setInterval(()=>{
+
+    boot.classList.add("boot-glitch");
+
+    /* MULTIPLE RANDOM FLASHES */
+
+    let flashCount = Math.floor(Math.random()*3)+1; // 1–3 flashes per cycle
+
+    for(let i=0;i<flashCount;i++){
+      setTimeout(()=>{
+        boot.classList.add("boot-flash");
+        setTimeout(()=>boot.classList.remove("boot-flash"),50+Math.random()*40);
+      },Math.random()*120);
+    }
+
+    bootText.innerText = fragments[Math.floor(Math.random()*fragments.length)];
+
+    steps++;
+
+    if(steps > 10){
+      clearInterval(interval);
+
+      /* FINAL CHAOTIC FLASH BURST */
+
+      for(let i=0;i<7;i++){
+        setTimeout(()=>{
+          boot.classList.add("boot-flash");
+          setTimeout(()=>boot.classList.remove("boot-flash"),60);
+        },i*70);
+      }
+
+      setTimeout(()=>{
+        boot.style.opacity = 0;
+        setTimeout(()=>boot.remove(),400);
+      },650);
+    }
+
+  },160);
+}
+
+/* Start boot BEFORE page interaction */
+bootSequence();
+</script>
+
+</body>
+
+</html>
